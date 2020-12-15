@@ -46,7 +46,7 @@ resource "azurerm_linux_virtual_machine" "datasci_node" {
   location              = var.location
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.vm_nic.*.id, count.index)]
-  size                  = "Standard_DS1_v2"
+  size                  = "Standard_B2ms"
   tags                  = merge(var.default_tags, { ansible_role = var.ans_role })
   admin_username        = var.admin_username
   computer_name         = join("", ["vm-", var.cluster_name, "-", var.environment, count.index])
