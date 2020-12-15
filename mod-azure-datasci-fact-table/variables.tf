@@ -13,7 +13,7 @@ variable "node_count" {
 variable "admin_username" {
   type        = string
   description = "Admin user"
-  default     = "datasci_admin"
+  default     = "admin_admin"
 }
 
 variable "resource_group_name" {

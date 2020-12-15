@@ -1,7 +1,7 @@
 # Moved to a more hacked, but cross cloud FQN
 # output "namespace_fqn" {
 #   description = "fully qualified namesapce for event hub"
-#   value = join(".", [azurerm_eventhub_namespace.eventhubs.name, "servicebus.usgovcloudapi.net"])
+#   value = join(".", [azurerm_eventhub_namespace.eventhubs.name, "servicebus.uscloudapi.net"])
 # }
 
 output "topic_primary_key" {
@@ -25,6 +25,6 @@ output "namespace_fqn" {
 }
 
 output "namespace_connection_string" {
-    description = "Connection string to the eventhub namespace"
-    value    = azurerm_eventhub_namespace.eventhubs.default_primary_connection_string
+  description = "Connection string to the eventhub namespace"
+  value       = azurerm_eventhub_namespace.eventhubs.default_primary_connection_string
 }

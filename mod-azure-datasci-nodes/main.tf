@@ -4,21 +4,6 @@ provider "azurerm" {
 }
 
 locals {
-  # ultimate goal is to move into a requirements.yml file here, and all the Ansible stuff being pulled from it's own repositories
-  # leverage ansible facts to work between all the various applications. No assumptions playbooks.
-  # user_data = <<EOF
-  # #cloud-config
-  # runcmd:
-  #   - yum install epel-release -y
-  #   - yum install git python2-pip python3 python3-pip libselinux-python3 libselinux-python -y
-  #   - yum install ansible java-1.8.0-openjdk python2-pip -y
-  #   - pip2 uninstall cryptography -y --no-input
-  #   - pip2 install pyOpenSSL -U --no-input
-  #   - pip2 install 'ansible[azure]' -U --no-input
-  #   - pip2 install azure-mgmt-compute -U --no-input
-  #   - pip2 install msrestazure -U --no-input
-  # EOF
-
   cloud_data = templatefile("${path.module}/cloud_init.tmpl", {
     vm_ssh_pubkey                     = base64encode(var.vm_ssh_pubkey)
     vm_ssh_privkey                    = base64encode(var.vm_ssh_privkey) #use this when cloud-init bug fixed
