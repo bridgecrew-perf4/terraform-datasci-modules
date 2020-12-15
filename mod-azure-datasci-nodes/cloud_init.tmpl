@@ -1,0 +1,145 @@
+#cloud-config
+## This executes as root..should likely change all dirs to /root/
+runcmd:
+  # Bug: https://bugs.launchpad.net/cloud-init/+bug/1486113
+  - mkdir -p /home/${admin_user}/.azure
+  #- touch /home/${admin_user}/.azure/credentials
+  - |
+    cat <<EOF > /home/${admin_user}/.azure/credentials
+    [${automation_principal_appid}]
+    client_id=${automation_principal_appid}
+    secret=${automation_principal_password}
+    tenant=${automation_principal_tenant}
+    subscription_id=${automation_principal_subscription}
+    EOF
+  - chmod -R 0640 /home/${admin_user}/.azure/credentials
+  - echo '${vm_ssh_privkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa
+  - echo '${vm_ssh_pubkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa.pub
+  - chmod -R 0600 /home/${admin_user}/.ssh/id_rsa
+  - chown -R ${admin_user}:${admin_user} /home/${admin_user}/
+  - |
+    cat <<EOF > /etc/yum.repos.d/azure-cli.repo
+    [azure-cli]
+    name=Azure CLI
+    baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+    enabled=1
+    gpgcheck=1
+    gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+    EOF
+  # end bug workaround
+  - yum install epel-release -y
+  - yum install git python2-pip python3 python3-pip libselinux-python3 libselinux-python -y
+  - yum install java-1.8.0-openjdk python2-pip -y
+  - rpm --import https://packages.microsoft.com/keys/microsoft.asc
+  - yum install azure-cli -y
+  - pip2 uninstall cryptography -y --no-input
+  - pip2 install pyOpenSSL -U --no-input
+  - pip2 install 'ansible[azure]' -U --no-input
+  - pip2 install azure-mgmt-compute -U --no-input
+  - pip2 install msrestazure -U --no-input
+  #bootstrap playbook something ans-prv-${ans_role}
+  - mkdir -p /opt/ansible_plays
+  - pushd /opt/ansible_plays
+  - git clone https://github.com/shrapk2/ans-datasci-wip.git
+  #- systemctl enable --now atd
+  - bash /etc/cron.hourly/${ans_role}
+  #- pushd ans-datasci-wip
+  #- pushd ans-prv-${ans_role}
+  #- sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_datascinode ./datasci_play.yml -e ansible_connection=local -e @/opt/ansible_plays/vars_${cluster_name}.yml"
+  # move to an AT or cron job, guessing this creates chicken/egg with write_files
+  #- sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+
+write_files:
+  - content: |
+      plugin: azure_rm
+      profile: ${automation_principal_appid}
+      include_vm_resource_groups:
+        - ${resource_group}
+      auth_source: auto
+
+      plain_host_names: yes
+      use_private_ip: yes
+
+      keyed_groups:
+      - prefix: tag
+        key: tags
+    path: /etc/ansible/azure_rm.yml
+    permissions: "0775"
+  # Drop facts of other stuff or have Ansible find it?
+  # - content: |
+  #     [general]
+  #     resource_group=${resource_group}
+  #     namespaces=${namespaces}
+  #     ansible_ssh_user=${admin_user}
+  #     ansible_user=${admin_user}
+  #     cluster_name=${cluster_name}
+  #     azure_datalake_container=${azure_datalake_container}
+  #     azure_datalake_endpoint=${azure_datalake_endpoint}
+  #   path: /etc/ansible/facts.d/${cluster_name}.fact
+  #   permissions: "0644"
+  - content: |
+      ---
+      resource_group: ${resource_group}
+      namespaces: ${namespaces}
+      ansible_ssh_user: ${admin_user}
+      ansible_user: ${admin_user}
+      cluster_name: ${cluster_name}
+      azure_datalake_container: ${azure_datalake_container}
+      azure_datalake_endpoint: ${azure_datalake_endpoint}
+      azure_client_id: ${automation_principal_appid}
+      azure_client_secret: ${automation_principal_password}
+      azure_tenant_id: ${automation_principal_tenant}
+      azure_subscription_id: ${automation_principal_subscription}
+      azure_cloud_name: ${azure_cloud_name}
+    path: /etc/ansible/group_vars/all
+    permissions: "0644"
+  - content: |
+      [defaults]
+      host_key_checking = False
+      deprecation_warnings = False
+      retry_files_enabled = False
+      [inventory]
+      [privilege_escalation]
+      [paramiko_connection]
+      [ssh_connection]
+      [persistent_connection]
+      [accelerate]
+      [selinux]
+      [colors]
+      [diff]
+    path: /etc/ansible/ansible.cfg
+    permissions: "0775"
+  - content: |
+      #!/bin/bash
+      pushd /opt/ansible_plays/ans-datasci-wip
+      git pull
+      sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+    path: /etc/cron.hourly/${ans_role}
+    permissions: "0775"
+    owner: root:root
+  # Bug: https://bugs.launchpad.net/cloud-init/+bug/1486113
+  # - encoding: b64
+  #   content: ${vm_ssh_privkey}
+  #   owner: ${admin_user}:${admin_user}
+  #   path: /home/${admin_user}/.ssh/id_rsa
+  #   permissions: "0600"
+  # - content: |
+  #     [${automation_principal_appid}]
+  #     client_id=${automation_principal_appid}
+  #     secret=${automation_principal_password}
+  #     tenant=${automation_principal_tenant}
+  #     subscription_id=${automation_principal_subscription}
+  #   path: /home/${admin_user}/.azure/credentials
+  #   owner: ${admin_user}:${admin_user}
+  #   permissions: "0640"
+# users:
+#   - default
+#   - name: ${admin_user}
+#     gecos: ${admin_user}
+#     primary_group: ${admin_user}
+#     shell: /bin/bash
+#     sudo: ALL=(ALL) NOPASSWD:ALL
+#     ssh_import_id: None
+#     lock_passwd: true
+#     ssh_authorized_keys:
+#       - ${vm_ssh_pubkey}

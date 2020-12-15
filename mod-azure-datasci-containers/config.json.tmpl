@@ -1,0 +1,14 @@
+{
+    "node_name": "mqtt-consul-gateway",
+    "addresses": {
+        "http": "${container_address} 127.0.0.1"
+    },
+    "server": false,
+    "advertise_addr": "${container_address}",
+    "client_addr": "127.0.0.1 ${container_address}",
+    "connect": {
+        "enabled": true
+    },
+    "data_dir": "/var/data",
+    "retry_join": ["${consul_server}"]
+}

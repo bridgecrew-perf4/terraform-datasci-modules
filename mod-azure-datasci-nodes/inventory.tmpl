@@ -1,0 +1,26 @@
+---
+# YAML-based inventory
+# https://docs.ansible.com/ansible/latest/plugins/inventory/yaml.html
+all:
+  hosts:
+    localhost:
+      connection: local
+
+  children:
+    ${cluster_name}:
+      vars:
+        resource_group: ${resource_group}
+        namespaces: ${namespaces}
+        ansible_ssh_user: ${admin_user}
+        ansible_user: ${admin_user}
+        ansible_ssh_private_key_file: "~/.ssh/datasci_terragrunt_key"
+        cluster_name: ${cluster_name}
+        azure_datalake_container: ${azure_datalake_container}
+        azure_datalake_endpoint: ${azure_datalake_endpoint}
+      hosts:
+        %{ for index, node in node_name ~}${node}:
+          ansible_host: ${public_ip[index]}
+          private_ips: ${private_ip[index]}
+          public_ips: ${public_ip[index]}
+          fqdns: ${node_fqdn[index]}
+        %{ endfor ~}
