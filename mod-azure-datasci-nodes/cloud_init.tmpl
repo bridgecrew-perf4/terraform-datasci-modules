@@ -58,7 +58,8 @@ write_files:
       auth_source: auto
 
       plain_host_names: yes
-      use_private_ip: yes
+      hostvar_expressions:
+        ansible_host: private_ipv4_addresses | first
 
       keyed_groups:
       - prefix: tag
