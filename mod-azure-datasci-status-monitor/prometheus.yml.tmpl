@@ -10,4 +10,9 @@ scrape_configs:
       static_configs:
       - targets: ['localhost:9090']
 
+    - job_name: 'datasci_nodes'
+      consul_sd_configs:
+      - server: '${consul_server_ip}:8500'
+        services:
+          - 'test1'
 # add consul and azure scrapes in here for dynamic monitoring

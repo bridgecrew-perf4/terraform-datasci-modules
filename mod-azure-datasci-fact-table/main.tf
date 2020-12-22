@@ -14,7 +14,7 @@ provider "azurerm" {
 
 # Create public IP address
 resource "azurerm_public_ip" "fact_ip" {
-  count               = var.node_count
+  count               = var.factnode_count
   name                = join("", ["pip-", var.sub_cluster_name, "-", var.environment, count.index])
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -29,7 +29,7 @@ resource "azurerm_public_ip" "fact_ip" {
 
 # Create network interface
 resource "azurerm_network_interface" "fact_nic" {
-  count               = var.node_count
+  count               = var.factnode_count
   name                = join("-", ["nic", var.sub_cluster_name, var.environment, count.index])
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -67,16 +67,17 @@ resource "azurerm_storage_account" "fact_boot_storage" {
 
 # Create fact virtual machine
 resource "azurerm_linux_virtual_machine" "fact_node" {
-  count                 = var.node_count
+  count                 = var.factnode_count
   name                  = join("", ["vm-", var.sub_cluster_name, "-", var.environment, count.index])
   location              = var.location
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.fact_nic.*.id, count.index)]
   size                  = "Standard_DS1_v2"
-  tags                  = var.default_tags
-  computer_name         = join("", ["nginx", var.environment])
-  admin_username        = var.admin_username
-  custom_data           = base64encode(local.cloudinit_data)
+  tags                  = merge(var.default_tags, { ansible_role = var.ans_role })
+  #computer_name         = join("", ["nginx", var.environment])
+  computer_name  = join("", ["vm-", var.cluster_name, "-", var.environment, count.index])
+  admin_username = var.admin_username
+  custom_data    = base64encode(local.cloudinit_data)
 
   os_disk {
     name                 = join("", ["diskfact", "_", var.environment, count.index])

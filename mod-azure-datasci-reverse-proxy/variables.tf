@@ -65,3 +65,8 @@ variable "vm_ssh_pubkey" {
   description = "Input for SSH Public Key"
   default     = ""
 }
+
+variable "ans_role" {
+  description = "Ansible role for automated cnfiguration management"
+  default     = "nginx"
+}

@@ -19,7 +19,7 @@ variable "storage_account_id" {
 }
 
 variable "topics" {
-  type        = set(string)
+  type        = list(string)
   description = "List of eventhubs to create under this eventhubs space"
 }
 

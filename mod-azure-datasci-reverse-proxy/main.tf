@@ -13,7 +13,7 @@ resource "azurerm_public_ip" "nginx_ip" {
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
-  domain_name_label   = join("-", [var.cluster_name, var.environment]) #, var.sub_cluster_name
+  domain_name_label   = join("-", [var.cluster_name, var.environment, var.sub_cluster_name])
 
   tags = merge(
     var.default_tags,
@@ -156,7 +156,6 @@ locals {
 
 }
 
-
 # Create nginx virtual machine
 resource "azurerm_linux_virtual_machine" "nginx_node" {
   name                  = join("-", ["vm", var.cluster_name, var.sub_cluster_name, var.environment])
@@ -165,7 +164,7 @@ resource "azurerm_linux_virtual_machine" "nginx_node" {
   network_interface_ids = [azurerm_network_interface.nginx_nic.id]
   size                  = "Standard_DS1_v2"
   tags                  = var.default_tags
-  computer_name         = join("", ["nginx", var.environment])
+  computer_name         = join("-", ["vm", var.cluster_name, var.sub_cluster_name, var.environment])
   admin_username        = var.admin_username
   custom_data           = base64encode(local.cloudinit_data)
 
@@ -193,21 +192,3 @@ resource "azurerm_linux_virtual_machine" "nginx_node" {
 
 
 }
-
-
-
-# +  provisioner "local-exec" {
-# +    command = "ansible-galaxy install bdellegrazie.nginx_exporter"
-# +  }
-# +
-#    provisioner "local-exec" {
-#      command = "ansible-playbook ${length(compact("${local.envs}")) > 0 ? "-e" : ""} ${join(" -e ", compact("${local.envs}"))} ${path.module}/nginx_play.yml"
-#    }
-# @@ -226,3 +231,7 @@ output "reverse_proxy_fqdn" {
-#  output "reverse_proxy_ip_address" {
-#    value = azurerm_public_ip.nginx_ip.ip_address
-#  }
-# +
-# +output "reverse_proxy_private_ip" {
-# +  value = azurerm_network_interface.nginx_nic.ip_configuration[0].private_ip_address
-# +}
