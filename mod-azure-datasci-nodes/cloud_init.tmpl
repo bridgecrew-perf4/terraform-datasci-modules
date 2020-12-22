@@ -37,17 +37,22 @@ runcmd:
   - pip2 install 'ansible[azure]' -U --no-input
   - pip2 install azure-mgmt-compute -U --no-input
   - pip2 install msrestazure -U --no-input
+  - pip3 install ansible -U --no-input
+  - pip3 install azure-mgmt-compute -U --no-input
+  - pip3 install msrestazure -U --no-input
   #bootstrap playbook something ans-prv-${ans_role}
   - mkdir -p /opt/ansible_plays
   - pushd /opt/ansible_plays
   - git clone https://github.com/shrapk2/ans-datasci-wip.git
-  #- systemctl enable --now atd
+  - ansible-galaxy collection install azure.azcollection
   - bash /etc/cron.hourly/${ans_role}
   #- pushd ans-datasci-wip
   #- pushd ans-prv-${ans_role}
   #- sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_datascinode ./datasci_play.yml -e ansible_connection=local -e @/opt/ansible_plays/vars_${cluster_name}.yml"
   # move to an AT or cron job, guessing this creates chicken/egg with write_files
   #- sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+
+#plugin: azure.azcollection.azure_rm
 
 write_files:
   - content: |
@@ -114,7 +119,7 @@ write_files:
       #!/bin/bash
       pushd /opt/ansible_plays/ans-datasci-wip
       git pull
-      sudo -u ${admin_user} -- bash -c "ansible-playbook -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+      sudo -u ${admin_user} -- bash -c "python3 $(ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
     path: /etc/cron.hourly/${ans_role}
     permissions: "0775"
     owner: root:root
