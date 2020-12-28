@@ -5,20 +5,16 @@ runcmd:
   - mkdir -p /home/${admin_user}/.azure
   #- touch /home/${admin_user}/.azure/credentials
   - |
-    if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
-      cat <<EOF > /home/${admin_user}/.azure/credentials
-      [${automation_principal_appid}]
-      client_id=${automation_principal_appid}
-      secret=${automation_principal_password}
-      tenant=${automation_principal_tenant}
-      subscription_id=${automation_principal_subscription}
-      EOF
-      chmod -R 0640 /home/${admin_user}/.azure/credentials
-      echo '${vm_ssh_privkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa
-      chmod -R 0600 /home/${admin_user}/.ssh/id_rsa
-    else
-      echo "Not master, exiting."
-    fi
+    cat <<EOF > /home/${admin_user}/.azure/credentials
+    [${automation_principal_appid}]
+    client_id=${automation_principal_appid}
+    secret=${automation_principal_password}
+    tenant=${automation_principal_tenant}
+    subscription_id=${automation_principal_subscription}
+    EOF
+  - chmod -R 0640 /home/${admin_user}/.azure/credentials
+  - echo '${vm_ssh_privkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa
+  - chmod -R 0600 /home/${admin_user}/.ssh/id_rsa
   - echo '${vm_ssh_pubkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa.pub
   - chown -R ${admin_user}:${admin_user} /home/${admin_user}/
   - |

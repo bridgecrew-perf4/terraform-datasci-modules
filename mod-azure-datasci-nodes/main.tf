@@ -41,6 +41,7 @@ resource "azurerm_network_interface" "vm_nic" {
   }
 }
 
+# Add count in here and only have cloud-init run on the "0" node
 resource "azurerm_linux_virtual_machine" "datasci_node" {
   count                 = var.node_count
   name                  = join("", ["vm-", var.cluster_name, "-", var.environment, count.index])
