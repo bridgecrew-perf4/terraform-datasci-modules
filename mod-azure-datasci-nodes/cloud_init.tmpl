@@ -99,6 +99,7 @@ write_files:
       azure_cloud_name: ${azure_cloud_name}
     path: /etc/ansible/group_vars/all
     permissions: "0640"
+    owner: ${admin_user}:${admin_user}
   - content: |
       [defaults]
       host_key_checking = False
