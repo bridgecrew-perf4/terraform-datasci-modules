@@ -8,6 +8,7 @@ locals {
     vm_ssh_pubkey                     = base64encode(var.vm_ssh_pubkey)
     vm_ssh_privkey                    = base64encode(var.vm_ssh_privkey) #use this when cloud-init bug fixed
     resource_group                    = var.resource_group_name
+    environment                       = var.environment
     cluster_name                      = var.cluster_name
     public_ip                         = azurerm_network_interface.vm_nic.*.id
     admin_user                        = var.admin_username

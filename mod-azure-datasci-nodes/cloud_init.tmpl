@@ -5,17 +5,21 @@ runcmd:
   - mkdir -p /home/${admin_user}/.azure
   #- touch /home/${admin_user}/.azure/credentials
   - |
-    cat <<EOF > /home/${admin_user}/.azure/credentials
-    [${automation_principal_appid}]
-    client_id=${automation_principal_appid}
-    secret=${automation_principal_password}
-    tenant=${automation_principal_tenant}
-    subscription_id=${automation_principal_subscription}
-    EOF
-  - chmod -R 0640 /home/${admin_user}/.azure/credentials
-  - echo '${vm_ssh_privkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa
+    if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
+      cat <<EOF > /home/${admin_user}/.azure/credentials
+      [${automation_principal_appid}]
+      client_id=${automation_principal_appid}
+      secret=${automation_principal_password}
+      tenant=${automation_principal_tenant}
+      subscription_id=${automation_principal_subscription}
+      EOF
+      chmod -R 0640 /home/${admin_user}/.azure/credentials
+      echo '${vm_ssh_privkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa
+      chmod -R 0600 /home/${admin_user}/.ssh/id_rsa
+    else
+      echo "Not master, exiting."
+    fi
   - echo '${vm_ssh_pubkey}' | base64 --decode > /home/${admin_user}/.ssh/id_rsa.pub
-  - chmod -R 0600 /home/${admin_user}/.ssh/id_rsa
   - chown -R ${admin_user}:${admin_user} /home/${admin_user}/
   - |
     cat <<EOF > /etc/yum.repos.d/azure-cli.repo
@@ -98,7 +102,7 @@ write_files:
       azure_subscription_id: ${automation_principal_subscription}
       azure_cloud_name: ${azure_cloud_name}
     path: /etc/ansible/group_vars/all
-    permissions: "0644"
+    permissions: "0640"
   - content: |
       [defaults]
       host_key_checking = False
@@ -117,9 +121,13 @@ write_files:
     permissions: "0775"
   - content: |
       #!/bin/bash
-      pushd /opt/ansible_plays/ans-datasci-wip
-      git pull
-      sudo -u ${admin_user} -- bash -c "python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+      if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
+          pushd /opt/ansible_plays/ans-datasci-wip
+          git pull
+          sudo -u ${admin_user} -- bash -c "python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+      else
+          echo "Not master, exiting."
+      fi
     path: /etc/cron.hourly/${ans_role}
     permissions: "0775"
     owner: root:root
