@@ -37,6 +37,7 @@ runcmd:
         echo "Not master, exiting."
     fi
     EOF
+  - chown ${admin_user}:${admin_user} /etc/ansible/group_vars/all
   # end bug workaround
   - yum install epel-release -y
   - yum install git python2-pip python3 python3-pip libselinux-python3 libselinux-python -y
