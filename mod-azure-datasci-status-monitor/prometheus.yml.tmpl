@@ -14,5 +14,4 @@ scrape_configs:
       consul_sd_configs:
       - server: '${consul_server_ip}:8500'
         services:
-          - 'test1'
-# add consul and azure scrapes in here for dynamic monitoring
+          - 'node_exporter'
