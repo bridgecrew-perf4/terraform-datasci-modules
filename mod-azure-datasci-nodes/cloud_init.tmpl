@@ -26,17 +26,6 @@ runcmd:
     gpgcheck=1
     gpgkey=https://packages.microsoft.com/keys/microsoft.asc
     EOF
-  - |
-    cat <<EOF > /etc/cron.hourly/${ans_role}
-    #!/bin/bash
-    if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
-        pushd /opt/ansible_plays/ans-datasci-wip
-        git pull
-        sudo -u ${admin_user} -- bash -c "python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
-    else
-        echo "Not master, exiting."
-    fi
-    EOF
   - chown ${admin_user}:${admin_user} /etc/ansible/group_vars/all
   # end bug workaround
   - yum install epel-release -y
@@ -57,6 +46,17 @@ runcmd:
   - pushd /opt/ansible_plays
   - git clone https://github.com/shrapk2/ans-datasci-wip.git
   - ansible-galaxy collection install azure.azcollection
+  - |
+    cat <<EOF > /etc/cron.hourly/${ans_role}
+    #!/bin/bash
+    if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
+        pushd /opt/ansible_plays/ans-datasci-wip
+        git pull
+        sudo -u ${admin_user} -- bash -c "python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+    else
+        echo "Not master, exiting."
+    fi
+    EOF
   - bash /etc/cron.hourly/${ans_role}
   #- pushd ans-datasci-wip
   #- pushd ans-prv-${ans_role}
