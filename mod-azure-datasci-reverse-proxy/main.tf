@@ -145,15 +145,13 @@ locals {
     - yum install git epel-release -y
     - yum clean all -y
     - yum install ansible -y
-    - ansible-galaxy install geerlingguy.nginx
-    - ansible-galaxy install geerlingguy.certbot
-    - ansible-galaxy install geerlingguy.java
-    - ansible-galaxy install bdellegrazie.nginx_exporter
+    - mkdir -p /opt/ansible_plays
+    - pushd /opt/ansible_plays
     - git clone https://github.com/shrapk2/ans-datasci-wip.git
     - pushd ans-datasci-wip
+    - ansible-galaxy install -r ./nginx_requirements.yml
     - ansible-playbook -i "localhost, " ./nginx_play.yml -e ansible_connection=local ${length(compact("${local.envs}")) > 0 ? "-e" : ""} ${join(" -e ", compact("${local.envs}"))}
   EOF
-
 }
 
 # Create nginx virtual machine

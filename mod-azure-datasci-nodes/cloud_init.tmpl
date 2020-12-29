@@ -45,15 +45,13 @@ runcmd:
   - mkdir -p /opt/ansible_plays
   - pushd /opt/ansible_plays
   - git clone https://github.com/shrapk2/ans-datasci-wip.git
-  - ansible-galaxy collection install azure.azcollection
-  - ansible-galaxy install cloudalchemy.node-exporter
   - |
     cat <<EOF > /etc/cron.hourly/${ans_role}
     #!/bin/bash
     if [ "$(hostname -s)" = vm-${cluster_name}-${environment}0 ]; then
         pushd /opt/ansible_plays/ans-datasci-wip
         git pull
-        sudo -u ${admin_user} -- bash -c "python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
+        sudo -u ${admin_user} -- bash -c "ansible-galaxy install -r ./${ans_role}_requirements.yml; python3 $(which ansible-playbook) -i /etc/ansible/azure_rm.yml -l tag_ansible_role_${ans_role} ./${ans_role}.yml -e target_server_group=tag_ansible_role_${ans_role}"
     else
         echo "Not master, exiting."
     fi
@@ -118,6 +116,7 @@ write_files:
       host_key_checking = False
       deprecation_warnings = False
       retry_files_enabled = False
+      remote_tmp = /var/tmp/
       [inventory]
       [privilege_escalation]
       [paramiko_connection]
