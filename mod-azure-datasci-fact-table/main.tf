@@ -75,7 +75,7 @@ resource "azurerm_linux_virtual_machine" "fact_node" {
   size                  = "Standard_DS1_v2"
   tags                  = merge(var.default_tags, { ansible_role = var.ans_role })
   #computer_name         = join("", ["nginx", var.environment])
-  computer_name  = join("", ["vm-", var.cluster_name, "-", var.environment, count.index])
+  computer_name  = join("", ["vm-", var.sub_cluster_name, "-", var.environment, count.index])
   admin_username = var.admin_username
   custom_data    = base64encode(local.cloudinit_data)
 
